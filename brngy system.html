@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Barangay Resident Information and Clearance Request System</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #f4f6f8; color: #333; }
+    .hidden { display: none !important; }
+
+    /* ===== LOGIN ===== */
+    .login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1f4e79, #eef4f9);
+      padding: 30px;
+    }
+    .login-card {
+      width: 420px;
+      background: #fff;
+      border-radius: 16px;
+      padding: 38px;
+      box-shadow: 0 15px 45px rgba(0,0,0,.18);
+      text-align: center;
+    }
+    .logo {
+      width: 70px; height: 70px;
+      border-radius: 50%;
+      background: #1f4e79;
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 18px;
+      font-size: 28px; font-weight: bold;
+    }
+    .login-card h1 { font-size: 20px; color: #1f4e79; margin-bottom: 6px; }
+    .login-card p { color: #666; margin-bottom: 22px; font-size: 14px; }
+    .field { text-align: left; margin: 14px 0; }
+    .field label { display: block; font-weight: bold; margin-bottom: 6px; font-size: 14px; }
+    .field input, .field select, .field textarea {
+      width: 100%; padding: 11px;
+      border: 1px solid #ccc; border-radius: 7px; font-size: 14px;
+    }
+    .password-wrap { position: relative; }
+    .password-wrap input { padding-right: 45px; }
+    .toggle-pass {
+      position: absolute; right: 10px; top: 8px;
+      border: 0; background: none; color: #1f4e79; cursor: pointer; font-size: 16px;
+    }
+    .remember { text-align: left; font-size: 14px; margin: 12px 0; }
+    .login-btn {
+      width: 100%; margin-top: 10px;
+      background: #1f4e79; color: #fff;
+      border: 0; border-radius: 7px;
+      padding: 12px; font-size: 15px; cursor: pointer;
+    }
+    .login-btn:hover { background: #163a5c; }
+    .error { color: #c62828; font-size: 13px; margin-top: 10px; min-height: 18px; }
+    .loading { text-align: center; color: #1f4e79; margin-top: 12px; }
+
+    /* ===== LAYOUT ===== */
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 250px; background: #1f4e79; color: #fff;
+      padding: 22px 15px; position: fixed; left: 0; top: 0; bottom: 0;
+    }
+    .brand { font-weight: bold; font-size: 16px; line-height: 1.35; padding: 10px 8px 20px; }
+    .nav button {
+      width: 100%; padding: 12px 14px;
+      background: transparent; border: 0; color: #fff;
+      text-align: left; border-radius: 7px; margin: 3px 0; cursor: pointer;
+      font-size: 14px;
+    }
+    .nav button:hover, .nav button.active { background: rgba(255,255,255,.16); }
+    .main { margin-left: 250px; width: calc(100% - 250px); padding: 28px 32px; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .topbar h1 { color: #1f4e79; font-size: 24px; }
+    .topbar span { color: #555; font-size: 14px; }
+
+    /* ===== PAGES ===== */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .card {
+      background: #fff; border-radius: 10px; padding: 18px 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    }
+    .stat { cursor: pointer; transition: transform .15s; }
+    .stat:hover { transform: translateY(-2px); }
+    .stat h3 { margin: 0 0 8px; color: #666; font-size: 13px; font-weight: 600; }
+    .stat strong { font-size: 26px; color: #1f4e79; }
+
+    .section {
+      background: #fff; padding: 22px;
+      border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,.08);
+      margin-bottom: 20px;
+    }
+    .section h2 { margin-bottom: 16px; color: #222; font-size: 18px; }
+
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .btn {
+      padding: 8px 14px; border: 0; border-radius: 6px;
+      color: #fff; cursor: pointer; font-size: 13px;
+    }
+    .btn:hover { opacity: .9; }
+    .add-button { background: #1f4e79; }
+    .edit-button { background: #e09f00; }
+    .delete-button { background: #c62828; }
+    .clear-button { background: #555; }
+    .green { background: #2e7d32; }
+    .gray { background: #666; }
+    .orange { background: #e09f00; }
+    .red { background: #c62828; }
+
+    .filter-box {
+      background: #eef4f9; padding: 16px;
+      margin: 16px 0; border-radius: 8px;
+    }
+    .filter-box h3 { margin-bottom: 12px; font-size: 15px; }
+    .filter-row {
+      display: grid; grid-template-columns: 2fr 1fr 1fr auto;
+      gap: 12px; align-items: end;
+    }
+    .filter-row input, .filter-row select {
+      padding: 9px; border: 1px solid #ccc; border-radius: 6px; width: 100%;
+    }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    th, td { border: 1px solid #ddd; padding: 10px 12px; text-align: left; font-size: 14px; }
+    th { background: #1f4e79; color: #fff; font-weight: 600; }
+    tr:nth-child(even) { background: #f9fafb; }
+
+    .badge {
+      display: inline-block; padding: 4px 10px;
+      border-radius: 20px; font-size: 12px; font-weight: 600;
+    }
+    .active, .approved, .completed { background: #dff2df; color: #2e7d32; }
+    .inactive, .rejected { background: #f8d7da; color: #c62828; }
+    .new, .pending { background: #fff0c2; color: #9a6b00; }
+
+    /* ===== MODAL & TOAST ===== */
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.5);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+    }
+    .modal {
+      background: #fff; padding: 24px;
+      border-radius: 10px; width: 400px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    .modal h3 { margin-bottom: 10px; }
+    .toast {
+      position: fixed; right: 24px; bottom: 24px;
+      background: #2e7d32; color: #fff;
+      padding: 14px 20px; border-radius: 8px;
+      z-index: 200; font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,.2);
+    }
+
+    .timeline { display: flex; justify-content: space-between; margin: 28px 0; }
+    .step { text-align: center; flex: 1; position: relative; font-size: 13px; }
+    .step::before {
+      content: ''; display: block;
+      width: 26px; height: 26px; border-radius: 50%;
+      background: #ccc; margin: 0 auto 8px;
+    }
+    .step.done::before, .step.current::before { background: #2e7d32; }
+
+    .chart {
+      height: 160px; background: #eef4f9;
+      border-radius: 8px; padding: 20px;
+      display: flex; align-items: end; gap: 24px; justify-content: center;
+    }
+    .bar { background: #1f4e79; width: 50px; border-radius: 4px 4px 0 0; }
+
+    .footer {
+      text-align: center; color: #888;
+      font-size: 13px; margin-top: 30px; padding-top: 16px;
+      border-top: 1px solid #eee;
+    }
+
+    @media (max-width: 900px) {
+      .sidebar { width: 200px; }
+      .main { margin-left: 200px; width: calc(100% - 200px); }
+      .cards { grid-template-columns: repeat(2, 1fr); }
+      .filter-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ==================== LOGIN ==================== -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <div class="logo">B</div>
+    <h1>Barangay Resident Information<br>and Clearance Request System</h1>
+    <p>Administrator Login</p>
+
+    <div class="field">
+      <label>Username</label>
+      <input id="username" type="text" placeholder="Enter username" autocomplete="username">
+    </div>
+
+    <div class="field">
+      <label>Password</label>
+      <div class="password-wrap">
+        <input id="password" type="password" placeholder="Enter password" autocomplete="current-password">
+        <button type="button" class="toggle-pass" onclick="togglePassword()">👁</button>
+      </div>
+    </div>
+
+    <div class="remember">
+      <label><input type="checkbox" id="remember"> Remember Me</label>
+    </div>
+
+    <button class="login-btn" onclick="login()">Sign In</button>
+    <div id="loginError" class="error"></div>
+    <div id="loginLoading" class="loading hidden">Signing in...</div>
+  </div>
+</div>
+
+<!-- ==================== SYSTEM ==================== -->
+<div id="system" class="app hidden">
+  <div class="layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">🏛 Barangay<br>Digital Services</div>
+      <nav class="nav">
+        <button onclick="showPage('dashboard', this)" class="active">🏠 Dashboard</button>
+        <button onclick="showPage('residents', this)">👥 Residents</button>
+        <button onclick="showPage('clearances', this)">📄 Clearance Requests</button>
+        <button onclick="showPage('documents', this)">🗂 Documents</button>
+        <button onclick="showPage('reports', this)">📊 Reports</button>
+        <button onclick="showPage('settings', this)">⚙ Settings</button>
+        <button onclick="logout()">↪ Logout</button>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <div class="topbar">
+        <h1 id="pageTitle">Dashboard</h1>
+        <span id="adminLabel">Barangay Administrator</span>
+      </div>
+
+      <!-- DASHBOARD -->
+      <section id="dashboard" class="page active">
+        <div class="cards">
+          <div class="card stat" onclick="showPageById('residents')">
+            <h3>Total Residents</h3>
+            <strong id="dashResidents">0</strong>
+          </div>
+          <div class="card stat">
+            <h3>Total Households</h3>
+            <strong id="dashHouseholds">0</strong>
+          </div>
+          <div class="card stat" onclick="showPageById('clearances')">
+            <h3>Pending Requests</h3>
+            <strong id="dashPending">0</strong>
+          </div>
+          <div class="card stat" onclick="showPageById('clearances')">
+            <h3>Completed Requests</h3>
+            <strong id="dashCompleted">0</strong>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Welcome to the Barangay System</h2>
+          <p>Manage resident information, clearance requests, documents, and reports in one organized system.</p>
+          <div class="actions">
+            <button class="btn add-button" onclick="openAddResident()">+ Add Resident</button>
+            <button class="btn green" onclick="showPageById('residents')">View Residents</button>
+            <button class="btn orange" onclick="openClearanceForm()">New Clearance Request</button>
+            <button class="btn gray" onclick="showPageById('clearances')">View Requests</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Recent Activities</h2>
+          <p>• Juan Dela Cruz resident information reviewed.</p>
+          <p>• New clearance request submitted.</p>
+          <p>• Resident record updated.</p>
+        </div>
+      </section>
+
+      <!-- RESIDENTS -->
+      <section id="residents" class="page">
+        <div class="section">
+          <div class="actions">
+            <button class="btn add-button" onclick="openAddResident()">+ Add Resident</button>
+          </div>
+
+          <div class="filter-box">
+            <h3>Search and Filter Records</h3>
+            <div class="filter-row">
+              <div>
+                <label>Search Resident</label>
+                <input id="search" onkeyup="filterResidents()" placeholder="Search name, address, occupation...">
+              </div>
+              <div>
+                <label>Residency Status</label>
+                <select id="statusFilter" onchange="filterResidents()">
+                  <option>All</option>
+                  <option>Active</option>
+                  <option>Inactive</option>
+                  <option>New</option>
+                </select>
+              </div>
+              <div>
+                <label>Occupation</label>
+                <select id="occupationFilter" onchange="filterResidents()">
+                  <option>All</option>
+                  <option>Student</option>
+                  <option>Teacher</option>
+                  <option>Employee</option>
+                  <option>Business Owner</option>
+                  <option>Unemployed</option>
+                </select>
+              </div>
+              <button class="btn clear-button" onclick="clearFilters()">Clear Filters</button>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Age</th>
+                <th>Address</th>
+                <th>Household</th>
+                <th>Occupation</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="residentTable"></tbody>
+          </table>
+          <p id="recordCount" style="margin-top:12px; color:#666;"></p>
+        </div>
+      </section>
+
+      <!-- RESIDENT FORM -->
+      <section id="residentForm" class="page">
+        <div class="section">
+          <h2 id="formTitle">Add Resident</h2>
+
+          <div class="field">
+            <label>Resident Name</label>
+            <input id="name" placeholder="Enter full name">
+          </div>
+          <div class="field">
+            <label>Age</label>
+            <input id="age" type="number" placeholder="Enter age">
+          </div>
+          <div class="field">
+            <label>Address</label>
+            <input id="address" placeholder="Enter address">
+          </div>
+          <div class="field">
+            <label>Household Number</label>
+            <input id="household" placeholder="e.g. HH-001">
+          </div>
+          <div class="field">
+            <label>Occupation</label>
+            <input id="occupation" placeholder="Enter occupation">
+          </div>
+          <div class="field">
+            <label>Residency Status</label>
+            <select id="residencyStatus">
+              <option value="">-- Select Status --</option>
+              <option value="Active">Active Resident</option>
+              <option value="Inactive">Inactive Resident</option>
+              <option value="New">New Resident</option>
+            </select>
+          </div>
+
+          <div class="actions">
+            <button class="btn add-button" id="saveButton" onclick="saveResident()">Add Resident</button>
+            <button class="btn clear-button" onclick="clearForm()">Clear</button>
+            <button class="btn gray" onclick="showPageById('residents')">Cancel</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROFILE -->
+      <section id="profile" class="page">
+        <div class="section">
+          <h2 id="profileName">Resident Profile</h2>
+          <div id="profileInfo"></div>
+          <h3 style="margin:18px 0 8px;">Clearance History</h3>
+          <div id="profileHistory">No clearance history available.</div>
+          <div class="actions">
+            <button class="btn edit-button" onclick="editResident(currentProfile)">Edit</button>
+            <button class="btn orange" onclick="openClearanceForm(currentProfile)">Request Clearance</button>
+            <button class="btn gray" onclick="showPageById('residents')">Back</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- CLEARANCES -->
+      <section id="clearances" class="page">
+        <div class="cards">
+          <div class="card"><h3>Total Requests</h3><strong id="totalRequests">0</strong></div>
+          <div class="card"><h3>Pending</h3><strong id="pendingRequests">0</strong></div>
+          <div class="card"><h3>Approved</h3><strong id="approvedRequests">0</strong></div>
+          <div class="card"><h3>Completed</h3><strong id="completedRequests">0</strong></div>
+        </div>
+
+        <div class="section">
+          <button class="btn add-button" onclick="openClearanceForm()">+ New Clearance Request</button>
+          <table>
+            <thead>
+              <tr>
+                <th>Request ID</th>
+                <th>Resident</th>
+                <th>Document Type</th>
+                <th>Purpose</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="clearanceTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- CLEARANCE FORM -->
+      <section id="clearanceForm" class="page">
+        <div class="section">
+          <h2>New Clearance Request</h2>
+
+          <div class="field">
+            <label>Select Resident</label>
+            <select id="clearanceResident"></select>
+          </div>
+          <div class="field">
+            <label>Document Type</label>
+            <select id="documentType">
+              <option>Barangay Clearance</option>
+              <option>Certificate of Residency</option>
+              <option>Certificate of Indigency</option>
+              <option>Barangay Certificate</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Purpose</label>
+            <textarea id="purpose" rows="3" placeholder="Enter purpose"></textarea>
+          </div>
+          <div class="field">
+            <label>Request Date</label>
+            <input id="requestDate" type="date">
+          </div>
+          <div class="field">
+            <label>Status</label>
+            <select id="clearanceStatus">
+              <option>Pending</option>
+              <option>Approved</option>
+              <option>Completed</option>
+              <option>Rejected</option>
+            </select>
+          </div>
+
+          <div class="actions">
+            <button class="btn add-button" onclick="submitClearance()">Submit</button>
+            <button class="btn clear-button" onclick="clearClearanceForm()">Clear</button>
+            <button class="btn gray" onclick="showPageById('clearances')">Cancel</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- CLEARANCE DETAILS -->
+      <section id="clearanceDetails" class="page">
+        <div class="section">
+          <h2>Clearance Details</h2>
+          <div id="clearanceInfo"></div>
+
+          <div class="timeline">
+            <div id="step1" class="step">Request Submitted</div>
+            <div id="step2" class="step">Under Review</div>
+            <div id="step3" class="step">Approved</div>
+            <div id="step4" class="step">Completed</div>
+          </div>
+
+          <div class="actions">
+            <button class="btn green" onclick="approveClearance()">Approve</button>
+            <button class="btn add-button" onclick="completeClearance()">Mark Completed</button>
+            <button class="btn gray" onclick="showPageById('clearances')">Back</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- DOCUMENTS -->
+      <section id="documents" class="page">
+        <div class="section">
+          <h2>Documents</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Document Name</th>
+                <th>Resident</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="documentsTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- REPORTS -->
+      <section id="reports" class="page">
+        <div class="cards">
+          <div class="card"><h3>Total Residents</h3><strong id="reportTotal">0</strong></div>
+          <div class="card"><h3>Active Residents</h3><strong id="reportActive">0</strong></div>
+          <div class="card"><h3>Inactive Residents</h3><strong id="reportInactive">0</strong></div>
+          <div class="card"><h3>New Residents</h3><strong id="reportNew">0</strong></div>
+        </div>
+
+        <div class="section">
+          <h2>Residents Overview</h2>
+          <div class="chart">
+            <div class="bar" id="barActive" style="height:100px" title="Active"></div>
+            <div class="bar" id="barInactive" style="height:35px" title="Inactive"></div>
+            <div class="bar" id="barNew" style="height:35px" title="New"></div>
+          </div>
+          <p style="margin-top:12px; color:#555;">Active • Inactive • New residents</p>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section id="settings" class="page">
+        <div class="section">
+          <h2>Settings</h2>
+
+          <h3 style="margin:16px 0 8px;">Account</h3>
+          <p><strong>Logged in as:</strong> <span id="settingsAdminName">Administrator</span></p>
+          <p style="color:#666; font-size:14px; margin-top:4px;">Role: Barangay System Administrator</p>
+
+          <h3 style="margin:20px 0 8px;">System</h3>
+          <p>Barangay Resident Information and Clearance Request System</p>
+          <p style="color:#666; font-size:14px; margin-top:4px;">Version 1.0 • Prototype</p>
+
+          <h3 style="margin:20px 0 8px;">Notifications</h3>
+          <label><input type="checkbox" checked> Enable system notifications</label>
+
+          <div class="actions" style="margin-top:24px;">
+            <button class="btn red" onclick="logout()">Logout</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="footer">
+        Barangay Digital Services • Resident Information and Clearance Request System
+      </div>
+    </main>
+  </div>
+</div>
+
+
+<div id="modal" class="modal-backdrop hidden">
+  <div class="modal">
+    <h3 id="modalTitle">Confirmation</h3>
+    <p id="modalText"></p>
+    <div class="actions" style="margin-top:18px;">
+      <button id="modalConfirm" class="btn red">Confirm</button>
+      <button class="btn gray" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="toast" class="toast hidden"></div>
+
+<script>
+  
+  const ADMIN = {
+    username: "admin",
+    password: "barangay2026",
+    displayName: "Barangay Administrator"
+  };
+
+  let residents = [
+    { id: 1, name: "Juan Dela Cruz", age: 25, address: "Barangay San Francisco", household: "HH-001", occupation: "Teacher", residencyStatus: "Active" },
+    { id: 2, name: "Maria Santos", age: 30, address: "Barangay Dau", household: "HH-002", occupation: "Employee", residencyStatus: "Active" },
+    { id: 3, name: "Pedro Garcia", age: 19, address: "Barangay Sapang Bato", household: "HH-003", occupation: "Student", residencyStatus: "New" },
+    { id: 4, name: "Ana Reyes", age: 42, address: "Barangay San Jose", household: "HH-004", occupation: "Business Owner", residencyStatus: "Active" },
+    { id: 5, name: "Jose Mendoza", age: 55, address: "Barangay Mawaque", household: "HH-005", occupation: "Unemployed", residencyStatus: "Inactive" }
+  ];
+
+  let clearances = [
+    { id: "CLR-001", residentId: 1, type: "Barangay Clearance", purpose: "Employment", date: "2026-10-01", status: "Pending" },
+    { id: "CLR-002", residentId: 2, type: "Certificate of Residency", purpose: "School Requirement", date: "2026-10-02", status: "Pending" },
+    { id: "CLR-003", residentId: 3, type: "Barangay Certificate", purpose: "Personal Requirement", date: "2026-09-28", status: "Completed" }
+  ];
+
+  let editIndex = -1;
+  let currentProfile = 0;
+  let currentClearance = null;
+  let currentAdmin = null;
+
+  
+  function togglePassword() {
+    const input = document.getElementById("password");
+    input.type = input.type === "password" ? "text" : "password";
+  }
+
+  function login() {
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const errorEl = document.getElementById("loginError");
+    const loadingEl = document.getElementById("loginLoading");
+
+    errorEl.textContent = "";
+
+    if (!username || !password) {
+      errorEl.textContent = "Please enter your username and password.";
+      return;
+    }
+
+    if (username !== ADMIN.username || password !== ADMIN.password) {
+      errorEl.textContent = "Invalid username or password.";
+      return;
+    }
+
+    loadingEl.classList.remove("hidden");
+
+    setTimeout(() => {
+      currentAdmin = ADMIN.displayName;
+      document.getElementById("loginScreen").classList.add("hidden");
+      document.getElementById("system").classList.remove("hidden");
+      document.getElementById("adminLabel").textContent = currentAdmin;
+      document.getElementById("settingsAdminName").textContent = currentAdmin;
+      loadingEl.classList.add("hidden");
+      showPageById("dashboard");
+      toast("Welcome, " + currentAdmin);
+    }, 600);
+  }
+
+  function logout() {
+    confirmAction("Logout", "Are you sure you want to logout?", () => {
+      currentAdmin = null;
+      document.getElementById("system").classList.add("hidden");
+      document.getElementById("loginScreen").classList.remove("hidden");
+      document.getElementById("username").value = "";
+      document.getElementById("password").value = "";
+      document.getElementById("loginError").textContent = "";
+    });
+  }
+
+
+  function showPageById(id) {
+    showPage(id, null);
+  }
+
+  function showPage(id, btn) {
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+    const page = document.getElementById(id);
+    if (page) page.classList.add("active");
+
+    const titles = {
+      dashboard: "Dashboard",
+      residents: "Resident Management",
+      residentForm: "Resident Form",
+      profile: "Resident Profile",
+      clearances: "Clearance Requests",
+      clearanceForm: "New Clearance Request",
+      clearanceDetails: "Clearance Details",
+      documents: "Documents",
+      reports: "Reports and Analytics",
+      settings: "Settings"
+    };
+    document.getElementById("pageTitle").textContent = titles[id] || "Barangay System";
+
+    document.querySelectorAll(".nav button").forEach(b => b.classList.remove("active"));
+    if (btn) {
+      btn.classList.add("active");
+    } else {
+      const map = { dashboard: 0, residents: 1, clearances: 2, documents: 3, reports: 4, settings: 5 };
+      const index = map[id];
+      if (index !== undefined) {
+        document.querySelectorAll(".nav button")[index].classList.add("active");
+      }
+    }
+
+    if (id === "residents") filterResidents();
+    if (id === "clearances") displayClearances();
+    if (id === "documents") displayDocuments();
+    if (id === "reports") updateReports();
+  }
+
+  
+  function filterResidents() {
+    const search = (document.getElementById("search")?.value || "").toLowerCase();
+    const status = document.getElementById("statusFilter")?.value || "All";
+    const occupation = document.getElementById("occupationFilter")?.value || "All";
+
+    const data = residents.filter(r => {
+      const matchSearch =
+        r.name.toLowerCase().includes(search) ||
+        r.address.toLowerCase().includes(search) ||
+        r.occupation.toLowerCase().includes(search) ||
+        r.household.toLowerCase().includes(search);
+
+      const matchStatus = status === "All" || r.residencyStatus === status;
+      const matchOccupation = occupation === "All" || r.occupation === occupation;
+
+      return matchSearch && matchStatus && matchOccupation;
+    });
+
+    displayResidents(data);
+  }
+
+  function displayResidents(data) {
+    const tbody = document.getElementById("residentTable");
+    tbody.innerHTML = "";
+
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#888;">No resident records found.</td></tr>`;
+    } else {
+      data.forEach(r => {
+        const index = residents.indexOf(r);
+        tbody.innerHTML += `
+          <tr>
+            <td>
+              <button class="btn" style="background:none; color:#1f4e79; padding:0;" onclick="viewProfile(${index})">
+                ${r.name}
+              </button>
+            </td>
+            <td>${r.age}</td>
+            <td>${r.address}</td>
+            <td>${r.household}</td>
+            <td>${r.occupation}</td>
+            <td><span class="badge ${r.residencyStatus.toLowerCase()}">${r.residencyStatus}</span></td>
+            <td>
+              <button class="btn edit-button" onclick="editResident(${index})">Edit</button>
+              <button class="btn delete-button" onclick="deleteResident(${index})">Delete</button>
+            </td>
+          </tr>`;
+      });
+    }
+
+    document.getElementById("recordCount").textContent = `Showing ${data.length} resident(s).`;
+    updateDashboard();
+  }
+
+  function openAddResident() {
+    clearForm();
+    showPageById("residentForm");
+  }
+
+  function saveResident() {
+    const name = document.getElementById("name").value.trim();
+    const age = Number(document.getElementById("age").value);
+    const address = document.getElementById("address").value.trim();
+    const household = document.getElementById("household").value.trim();
+    const occupation = document.getElementById("occupation").value.trim();
+    const status = document.getElementById("residencyStatus").value;
+
+    if (!name) return alert("Please enter the resident name.");
+    if (!age || age <= 0) return alert("Please enter a valid age.");
+    if (!address) return alert("Please enter the address.");
+    if (!household) return alert("Please enter the household number.");
+    if (!occupation) return alert("Please enter the occupation.");
+    if (!status) return alert("Please select the residency status.");
+
+    const data = { name, age, address, household, occupation, residencyStatus: status };
+
+    if (editIndex === -1) {
+      data.id = Date.now();
+      residents.push(data);
+      toast("Resident successfully added.");
+    } else {
+      data.id = residents[editIndex].id;
+      residents[editIndex] = data;
+      toast("Resident information successfully updated.");
+      editIndex = -1;
+    }
+
+    clearForm();
+    showPageById("residents");
+  }
+
+  function editResident(index) {
+    editIndex = index;
+    const r = residents[index];
+
+    document.getElementById("name").value = r.name;
+    document.getElementById("age").value = r.age;
+    document.getElementById("address").value = r.address;
+    document.getElementById("household").value = r.household;
+    document.getElementById("occupation").value = r.occupation;
+    document.getElementById("residencyStatus").value = r.residencyStatus;
+    document.getElementById("formTitle").textContent = "Edit Resident";
+    document.getElementById("saveButton").textContent = "Update Resident";
+
+    showPageById("residentForm");
+  }
+
+  function deleteResident(index) {
+    confirmAction(
+      "Delete Resident",
+      `Are you sure you want to delete ${residents[index].name}?`,
+      () => {
+        residents.splice(index, 1);
+        toast("Resident successfully deleted.");
+        filterResidents();
+      }
+    );
+  }
+
+  function clearForm() {
+    ["name", "age", "address", "household", "occupation"].forEach(id => {
+      document.getElementById(id).value = "";
+    });
+    document.getElementById("residencyStatus").value = "";
+    editIndex = -1;
+    document.getElementById("formTitle").textContent = "Add Resident";
+    document.getElementById("saveButton").textContent = "Add Resident";
+  }
+
+  function clearFilters() {
+    document.getElementById("search").value = "";
+    document.getElementById("statusFilter").value = "All";
+    document.getElementById("occupationFilter").value = "All";
+    displayResidents(residents);
+  }
+
+  function viewProfile(index) {
+    currentProfile = index;
+    const r = residents[index];
+
+    document.getElementById("profileName").textContent = r.name;
+    document.getElementById("profileInfo").innerHTML = `
+      <p><b>Age:</b> ${r.age}</p>
+      <p><b>Address:</b> ${r.address}</p>
+      <p><b>Household:</b> ${r.household}</p>
+      <p><b>Occupation:</b> ${r.occupation}</p>
+      <p><b>Status:</b> ${r.residencyStatus}</p>
+      <p><b>Resident ID:</b> RES-${r.id}</p>
+    `;
+
+    const history = clearances.filter(c => c.residentId === r.id);
+    document.getElementById("profileHistory").innerHTML = history.length
+      ? history.map(c => `<p>${c.id} — ${c.type} — ${c.status}</p>`).join("")
+      : "No clearance history available.";
+
+    showPageById("profile");
+  }
+
+  
+  function openClearanceForm(residentIndex = null) {
+    const select = document.getElementById("clearanceResident");
+    select.innerHTML = residents.map(r =>
+      `<option value="${r.id}">${r.name}</option>`
+    ).join("");
+
+    if (residentIndex !== null) {
+      select.value = residents[residentIndex].id;
+    }
+
+    document.getElementById("requestDate").value = new Date().toISOString().slice(0, 10);
+    showPageById("clearanceForm");
+  }
+
+  function clearClearanceForm() {
+    document.getElementById("purpose").value = "";
+    document.getElementById("clearanceStatus").value = "Pending";
+    document.getElementById("requestDate").value = new Date().toISOString().slice(0, 10);
+  }
+
+  function submitClearance() {
+    const residentId = Number(document.getElementById("clearanceResident").value);
+    const purpose = document.getElementById("purpose").value.trim();
+
+    if (!purpose) return alert("Please enter the purpose.");
+
+    const newClearance = {
+      id: "CLR-" + String(Date.now()).slice(-6),
+      residentId,
+      type: document.getElementById("documentType").value,
+      purpose,
+      date: document.getElementById("requestDate").value,
+      status: document.getElementById("clearanceStatus").value
+    };
+
+    clearances.push(newClearance);
+    toast("Clearance request successfully submitted.");
+    clearClearanceForm();
+    showPageById("clearances");
+  }
+
+  function displayClearances() {
+    const tbody = document.getElementById("clearanceTable");
+    tbody.innerHTML = "";
+
+    clearances.forEach((c, i) => {
+      const resident = residents.find(r => r.id === c.residentId);
+      tbody.innerHTML += `
+        <tr>
+          <td>${c.id}</td>
+          <td>${resident ? resident.name : "Unknown Resident"}</td>
+          <td>${c.type}</td>
+          <td>${c.purpose}</td>
+          <td>${c.date}</td>
+          <td><span class="badge ${c.status.toLowerCase()}">${c.status}</span></td>
+          <td>
+            <button class="btn add-button" onclick="viewClearance(${i})">View</button>
+            <button class="btn green" onclick="approveIndex(${i})">Approve</button>
+            <button class="btn orange" onclick="completeIndex(${i})">Complete</button>
+          </td>
+        </tr>`;
+    });
+
+    updateClearanceStats();
+  }
+
+  function viewClearance(index) {
+    currentClearance = index;
+    const c = clearances[index];
+    const resident = residents.find(r => r.id === c.residentId);
+
+    document.getElementById("clearanceInfo").innerHTML = `
+      <p><b>Request ID:</b> ${c.id}</p>
+      <p><b>Resident:</b> ${resident ? resident.name : "Unknown"}</p>
+      <p><b>Document:</b> ${c.type}</p>
+      <p><b>Purpose:</b> ${c.purpose}</p>
+      <p><b>Date:</b> ${c.date}</p>
+      <p><b>Status:</b> ${c.status}</p>
+    `;
+
+    updateTimeline(c.status);
+    showPageById("clearanceDetails");
+  }
+
+  function approveIndex(index) {
+    clearances[index].status = "Approved";
+    toast("Clearance approved.");
+    displayClearances();
+  }
+
+  function completeIndex(index) {
+    clearances[index].status = "Completed";
+    toast("Clearance marked completed.");
+    displayClearances();
+  }
+
+  function approveClearance() {
+    if (currentClearance !== null) {
+      clearances[currentClearance].status = "Approved";
+      viewClearance(currentClearance);
+      toast("Clearance approved.");
+    }
+  }
+
+  function completeClearance() {
+    if (currentClearance !== null) {
+      clearances[currentClearance].status = "Completed";
+      viewClearance(currentClearance);
+      toast("Clearance marked completed.");
+    }
+  }
+
+  function updateTimeline(status) {
+    ["step1", "step2", "step3", "step4"].forEach(id => {
+      document.getElementById(id).classList.remove("done", "current");
+    });
+
+    const map = { Pending: 1, "Under Review": 2, Approved: 3, Completed: 4, Rejected: 1 };
+    const step = map[status] || 1;
+
+    for (let i = 1; i <= step; i++) {
+      document.getElementById("step" + i).classList.add("done");
+    }
+    document.getElementById("step" + step).classList.add("current");
+  }
+
+  
+  function displayDocuments() {
+    const tbody = document.getElementById("documentsTable");
+    tbody.innerHTML = "";
+
+    clearances.forEach(c => {
+      const resident = residents.find(r => r.id === c.residentId);
+      tbody.innerHTML += `
+        <tr>
+          <td>${c.type}</td>
+          <td>${resident ? resident.name : "Unknown"}</td>
+          <td>${c.date}</td>
+          <td>${c.status}</td>
+          <td>
+            <button class="btn add-button" onclick="previewDoc('${c.id}')">View</button>
+            <button class="btn green" onclick="toast('Document download completed.')">Download</button>
+          </td>
+        </tr>`;
+    });
+  }
+
+  function previewDoc(id) {
+    confirmAction(
+      "Document Preview",
+      `Previewing document ${id}. This is a simulated document preview.`,
+      () => {}
+    );
+  }
+
+  
+  function updateReports() {
+    const active = residents.filter(r => r.residencyStatus === "Active").length;
+    const inactive = residents.filter(r => r.residencyStatus === "Inactive").length;
+    const neu = residents.filter(r => r.residencyStatus === "New").length;
+
+    document.getElementById("reportTotal").textContent = residents.length;
+    document.getElementById("reportActive").textContent = active;
+    document.getElementById("reportInactive").textContent = inactive;
+    document.getElementById("reportNew").textContent = neu;
+
+    
+    const max = Math.max(active, inactive, neu, 1);
+    document.getElementById("barActive").style.height = (active / max * 120) + "px";
+    document.getElementById("barInactive").style.height = (inactive / max * 120) + "px";
+    document.getElementById("barNew").style.height = (neu / max * 120) + "px";
+  }
+
+  function updateDashboard() {
+    const households = new Set(residents.map(r => r.household)).size;
+
+    document.getElementById("dashResidents").textContent = residents.length;
+    document.getElementById("dashHouseholds").textContent = households;
+    document.getElementById("dashPending").textContent = clearances.filter(c => c.status === "Pending").length;
+    document.getElementById("dashCompleted").textContent = clearances.filter(c => c.status === "Completed").length;
+  }
+
+  function updateClearanceStats() {
+    document.getElementById("totalRequests").textContent = clearances.length;
+    document.getElementById("pendingRequests").textContent = clearances.filter(c => c.status === "Pending").length;
+    document.getElementById("approvedRequests").textContent = clearances.filter(c => c.status === "Approved").length;
+    document.getElementById("completedRequests").textContent = clearances.filter(c => c.status === "Completed").length;
+    updateDashboard();
+  }
+
+  function confirmAction(title, text, callback) {
+    document.getElementById("modalTitle").textContent = title;
+    document.getElementById("modalText").textContent = text;
+    document.getElementById("modalConfirm").onclick = () => {
+      closeModal();
+      callback();
+    };
+    document.getElementById("modal").classList.remove("hidden");
+  }
+
+  function closeModal() {
+    document.getElementById("modal").classList.add("hidden");
+  }
+
+  function toast(message) {
+    const el = document.getElementById("toast");
+    el.textContent = message;
+    el.classList.remove("hidden");
+    setTimeout(() => el.classList.add("hidden"), 2200);
+  }
+
+  function init() {
+    displayResidents(residents);
+    displayClearances();
+    displayDocuments();
+    updateReports();
+    updateDashboard();
+  }
+
+  init();
+</script>
+</body>
+</html>
